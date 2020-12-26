@@ -1,0 +1,17 @@
+#	
+# Filename	gawk.code
+# Date		2/26/2019
+# Author	Basil Elhindi
+# Email		bae170000@utdallas.edu
+# Course	CS 3377.502 Spring 2019
+# Version	1.0
+# Copyright 2019, All Rights Reserved
+#
+# Description
+#   A gawk file that interprets a 4x6 table of numbers from an input file and adds the values of the first and fourth columns and prints their sums seperated
+#   by a space.
+#
+
+BEGIN {rowIndex = 0; columnOneSum = 0; columnFourSum = 0;}
+ {columnOneSum = columnOneSum + $1; columnFourSum = columnFourSum + $4}
+END {printf "%d %d\n", columnOneSum, columnFourSum;}

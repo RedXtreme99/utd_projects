@@ -1,0 +1,62 @@
+/*
+  Filename   program2.cpp
+  Date       2/7/2019
+  Author     Basil Elhindi
+  Email      bae170000
+  Course     CS 3377.502 Spring 2019
+  Version    1.0
+  Copyright 2019, All Rights Reserved
+
+  Description
+    
+*/
+
+#include <iostream>
+#include <fstream>
+#include "header.h"
+#include <cctype>
+using namespace std;
+
+map<int, string> myMap;
+
+int main(int argc, char* argv[])
+{
+  parseCommandLine(argc, argv);
+  ifstream inputfile (myMap[INFILENAME]);
+  ofstream outputfile (myMap[OUTFILENAME]);
+  char c;
+  if(inputfile.is_open())
+  {
+    if(myMap[UFLAG] == "true")
+    {
+      while(inputfile.get(c))
+       {
+	 if(c == '\n')
+	   outputfile << endl;
+         else outputfile << static_cast<char>(toupper(c));
+       }
+    }
+    else if(myMap[LFLAG] == "true")
+    {
+      while(inputfile.get(c))
+      {
+	if(c == '\n')
+	  outputfile << endl;
+        else outputfile << static_cast<char>(tolower(c));
+      }
+    }
+    else
+    {
+      while(inputfile.get(c))
+	{
+	  if(c == '\n')
+	    outputfile << endl;
+	  else outputfile << c;
+	}
+    }
+  }
+  else {cerr << "error"; return 1;}
+  outputfile.close();
+  inputfile.close();
+  return 0;
+}
