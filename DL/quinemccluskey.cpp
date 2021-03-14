@@ -38,6 +38,59 @@ bool isGreyCode(string a, string b)
     return count == 1;
 }
 
+// Function to replace bit of two terms that differ by one bit with a dont care
+string combine(string a, string b)
+{
+    string out = "";
+    for(int i = 0; i < a.length(); i++)
+    {
+        if(a[i] != b[i])
+        {
+            out += "-";
+        }
+        else
+        {
+            out += a[i];
+        }
+    }
+    return out;
+}
+
+// Function to perform one iteration of adjacency combining
+vector<string> reduce(vector<string> minterms)
+{
+    vector<string> primes;
+    int numTerms = minterms.size();
+    bool* checked = new bool[numTerms];
+    for(int i = 0; i < numTerms; i++)
+    {
+        for(int j = i; j < numTerms; j++)
+        {
+            // Check if two terms are adjacent and replace their common bit
+            if(isGreyCode(minterms.at(i), minterms.at(j)))
+            {
+                checked[i] = true;
+                checked[j] = true;
+                if(find(primes.begin(), primes.end(), 
+                    combine(minterms.at(i),minterms.at(j))) == primes.end())
+                {
+                    primes.push_back(combine(minterms.at(i), minterms.at(j)));
+                }
+            }
+        }
+    }
+    // Replace terms that were not used as they are prime implicants
+    for(int i = 0; i < numTerms; i++)
+    {
+        if(!checked[i])
+        {
+            primes.push_back(minterms.at(i));
+        }
+    }
+    delete[] checked;
+    return primes;
+}
+
 int main()
 {
     // Parse input for number of literals, the on-array, and the dont-cares
@@ -75,7 +128,12 @@ int main()
     minterms.insert(minterms.end(), dcarray.begin(), dcarray.end());
     sort(minterms.begin(), minterms.end());
 
-
+    // Minimize adjacency table to determine prime implicants
+    while(minterms != reduce(minterms))
+    {
+        minterms = reduce(minterms);
+        sort(minterms.begin(), minterms.end());
+    }
 
     return 0;
 }
