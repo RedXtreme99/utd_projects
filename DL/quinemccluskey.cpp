@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <bitset>
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -22,6 +23,32 @@ vector<string> decToBin(int numVars, vector<int> vec)
         outvec.at(i) = outvec.at(i).substr(10-numVars);
     }
     return outvec;
+}
+
+// Function to sort binary strings
+bool compare(string a, string b)
+{
+
+    for(int i = 0; i < a.length(); i++)
+    {
+        if(a[i] == b[i])
+        {
+            continue;
+        }
+        else if(a[i] == '0')
+        {
+            return true;
+        }
+        else if(a[i] == '-' && b[i] == '1')
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    return false;
 }
 
 // Function to check if two binary strings differ in exactly one bit
@@ -61,7 +88,12 @@ vector<string> reduce(vector<string> minterms)
 {
     vector<string> primes;
     int numTerms = minterms.size();
-    bool* checked = new bool[numTerms];
+    vector<bool> checked;
+    for(int i = 0; i < numTerms; i++)
+    {
+        checked.push_back(false);
+    }
+    bool changed = false;
     for(int i = 0; i < numTerms; i++)
     {
         for(int j = i; j < numTerms; j++)
@@ -69,8 +101,9 @@ vector<string> reduce(vector<string> minterms)
             // Check if two terms are adjacent and replace their common bit
             if(isGreyCode(minterms.at(i), minterms.at(j)))
             {
-                checked[i] = true;
-                checked[j] = true;
+                changed = true;
+                checked.at(i) = true;
+                checked.at(j) = true;
                 if(find(primes.begin(), primes.end(), 
                     combine(minterms.at(i),minterms.at(j))) == primes.end())
                 {
@@ -80,14 +113,17 @@ vector<string> reduce(vector<string> minterms)
         }
     }
     // Replace terms that were not used as they are prime implicants
+    if(!changed)
+    {
+        return minterms;
+    }
     for(int i = 0; i < numTerms; i++)
     {
-        if(!checked[i])
+        if(!checked.at(i))
         {
             primes.push_back(minterms.at(i));
         }
     }
-    delete[] checked;
     return primes;
 }
 
@@ -167,13 +203,13 @@ int main()
     vector<string> minterms;
     minterms.insert(minterms.end(), onarray.begin(), onarray.end());
     minterms.insert(minterms.end(), dcarray.begin(), dcarray.end());
-    sort(minterms.begin(), minterms.end());
+    sort(minterms.begin(), minterms.end(), compare);
 
     // Minimize adjacency table to determine prime implicants
     while(minterms != reduce(minterms))
     {
         minterms = reduce(minterms);
-        sort(minterms.begin(), minterms.end());
+        sort(minterms.begin(), minterms.end(), compare);
     }
 
     // If there are no minterms, the function is equivalent to logic 0
@@ -183,16 +219,9 @@ int main()
         return 0;
     }
 
-    // If the only minterm is all dashes, then the function is logic 1
-    if(minterms.size() == 1)
+    // If all minterms are on, the function is equivalent to logic 1
+    if(ons.size() == pow(2,numLiterals))
     {
-        for(int i = 0; i < numLiterals; i++)
-        {
-            if(minterms.at(0)[i] != '-')
-            {
-                break;
-            }
-        }
         cout << "F = 1" << endl;
         return 0;
     }
@@ -298,7 +327,6 @@ int main()
                             coverageTable.at(i).erase
                                 (coverageTable.at(i).begin() + k);
                         }
-                        ons.erase(ons.begin() + k);
                         k--;
                         cols--;
                     }
@@ -332,7 +360,6 @@ int main()
             {
                 largestCubeSize = count;
                 largestCubes.clear();
-                largestCubes.push_back(i);
             }
             if(count == largestCubeSize)
             {
@@ -365,7 +392,6 @@ int main()
                 {
                     coverageTable.at(i).erase(coverageTable.at(i).begin() + j);
                 }
-                ons.erase(ons.begin() + j);
                 j--;
                 cols--;
             }
