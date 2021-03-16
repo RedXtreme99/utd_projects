@@ -41,19 +41,19 @@ bool isGreyCode(string a, string b)
 // Function to replace bit of two terms that differ by one bit with a dont care
 string combine(string a, string b)
 {
-    string out = "";
+    string outstr = "";
     for(int i = 0; i < a.length(); i++)
     {
         if(a[i] != b[i])
         {
-            out += "-";
+            outstr += "-";
         }
         else
         {
-            out += a[i];
+            outstr += a[i];
         }
     }
-    return out;
+    return outstr;
 }
 
 // Function to perform one iteration of adjacency combining
@@ -96,11 +96,7 @@ bool covers(string a, string b)
 {
     for(int i = 0; i < a.length(); i++)
     {
-        if(a[i] == b[i])
-        {
-            continue;
-        }
-        else if(a[i] == '-')
+        if(a[i] == b[i] || a[i] == '-')
         {
             continue;
         }
@@ -138,7 +134,7 @@ string getTerm(string term)
 
 int main()
 {
-    // Parse input for number of literals, the on-array, and the dont-cares
+    // Parse input line for number of literals, the on-array, and the dont-cares
     string input;
     getline(cin, input);
     stringstream ss(input);
@@ -229,30 +225,9 @@ int main()
 
     // Minimize coverage table and build output string
     string formula = "F =";
-
     while(!coverageTable.empty())
     {
-        ////////////////
-        ////////////////////////////////
-        cout << "ROWS" << endl;
-        for(int i = 0; i < minterms.size(); i++)
-            cout << minterms.at(i) << endl;
-        cout << endl;
-        cout << "COLS" << endl;
-        for(int i = 0; i < ons.size(); i++)
-            cout << ons.at(i) << endl;
-        cout << endl; ////////////
-        cout << "TABLE" << endl;
-        for(int i = 0; i < rows; i++)
-        {
-            for(int j = 0; j < cols; j++)
-                cout << coverageTable.at(i).at(j) << " ";
-            cout << endl;
-        } cout << endl;
-        cout << "FORMULA" << endl;
-        cout << formula << endl << endl;//////////////////
-        
-        // Check for the less-thans; check if i <= j
+        // Check for the less-thans; check if row i <= j
         bool remove = false;
         bool pass = false;
         for(int i = 0; i < rows; i++)
@@ -277,7 +252,6 @@ int main()
                     continue;
                 }
                 remove = true;
-                cout << "REMOVING ROW " << i << endl;
                 coverageTable.erase(coverageTable.begin() + i);
                 minterms.erase(minterms.begin() + i);
                 rows--;
@@ -314,7 +288,6 @@ int main()
             }
             if(epiRow > -1)
             {
-                cout << "REMOVING ROW " << epiRow << " AND ITS COLUMNS" << endl;
                 remove = true;
                 for(int k = 0; k < cols; k++)
                 {
@@ -341,9 +314,66 @@ int main()
         {
             continue;
         }
-        // Cyclical, remove best choice
 
-        break; /////
+        // Cyclical, remove best choice
+        int largestCubeSize = -1;
+        vector<int> largestCubes;
+        for(int i = 0; i < minterms.size(); i++)
+        {
+            int count = 0;
+            for(int j = 0; j < numLiterals; j++)
+            {
+                if(minterms.at(i)[j] == '-')
+                {
+                    count++;
+                }
+            }
+            if(count > largestCubeSize)
+            {
+                largestCubeSize = count;
+                largestCubes.clear();
+                largestCubes.push_back(i);
+            }
+            if(count == largestCubeSize)
+            {
+                largestCubes.push_back(i);
+            }
+        }
+        int largestCover = -1;
+        int term = -1;
+        for(int i = 0; i < largestCubes.size(); i++)
+        {
+            int count = 0;
+            for(int j = 0; j < cols; j++)
+            {
+                if(coverageTable.at(largestCubes.at(i)).at(j))
+                {
+                    count++;
+                }
+            }
+            if(count > largestCover)
+            {
+                largestCover = count;
+                term = largestCubes.at(i);
+            }
+        }
+        for(int j = 0; j < cols; j++)
+        {
+            if(coverageTable.at(term).at(j))
+            {
+                for(int i = 0; i < rows; i++)
+                {
+                    coverageTable.at(i).erase(coverageTable.at(i).begin() + j);
+                }
+                ons.erase(ons.begin() + j);
+                j--;
+                cols--;
+            }
+        }
+        coverageTable.erase(coverageTable.begin() + term);
+        formula += getTerm(minterms.at(term));
+        minterms.erase(minterms.begin() + term);
+        rows--;
     }
 
     formula = formula.substr(0, formula.length() - 2);
