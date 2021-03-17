@@ -12,6 +12,16 @@
 
 using namespace std;
 
+void backtrack(map<char, vector<int> > varMap, vector<string> constraints)
+{
+
+}
+
+void forwardcheck(map<char, vector<int> > varMap, vector<string> constraints)
+{
+
+}
+
 int main(int argc, char** argv)
 {
     // Check for correct number of command line inputs
@@ -67,7 +77,24 @@ int main(int argc, char** argv)
         }
     }
 
-    // Store constraints as a vector
+    // Store constraints as a vector where all elements are length 3 strings
+    vector<string> constraints;
+    while(getline(confile, line))
+    {
+        stringstream ss;
+        ss << line[0] << line[2] << line[4];
+        constraints.push_back(ss.str());
+    }
+
+    // Use the commanded procedure to attempt to solve the CSP
+    if(procedure == "none")
+    {
+        backtrack(varMap, constraints);
+    }
+    else
+    {
+        forwardcheck(varMap, constraints);
+    }
 
     return 0;
 }
