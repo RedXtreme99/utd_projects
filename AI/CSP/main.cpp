@@ -1,8 +1,10 @@
 /*  Basil El-Hindi
  *  CS 4365.HON
  *  CSP Solver
- *  main.cpp        */
+ *  main.cpp        
+ */
 
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <map>
@@ -12,12 +14,119 @@
 
 using namespace std;
 
-void backtrack(map<char, vector<int> > varMap, vector<string> constraints)
+// Function to determine which variables are still unassigned
+vector<string> diff(map<string, vector<int> > mp, vector<string> vec)
 {
-
+    vector<string> vars;
+    for(auto const& e : mp)
+    {
+        if(!count(vec.begin(), vec.end(), e.first))
+        {
+            vars.push_back(e.first);
+        }
+    }
+    return vars;
 }
 
-void forwardcheck(map<char, vector<int> > varMap, vector<string> constraints)
+// Function to determine which variable to next assign
+string select_variable
+(
+    vector<string> vars, 
+    map<string, vector<int> > varMap, 
+    vector<string> constraints
+)
+{
+    // If there is only one variable available, select it
+    if(vars.size() == 1)
+    {
+        return vars.at(0);
+    }
+
+    // Choose the most constrained variable
+    vector<string> mostConstrained;
+    int domainSize = 9999;
+    for(int i = 0; i < vars.size(); i++)
+    {
+        if(varMap[vars.at(i)].size() < domainSize)
+        {
+            domainSize = varMap[vars.at(i)].size();
+            mostConstrained.clear();
+        }
+        if(varMap[vars.at(i)].size() == domainSize)
+        {
+            mostConstrained.push_back(vars.at(i));
+        }
+    }
+    if(mostConstrained.size() == 1)
+    {
+        return mostConstrained.at(0);
+    }
+
+    // If there are ties, use the most contraining variable
+    vector<string> mostConstraining;
+    int constraintCount;
+    int mostConstraint = -1;
+    for(int i = 0; i < mostConstrained.size(); i++)
+    {
+        constraintCount = 0;
+        for(int j = 0; j < vars.size(); j++)
+        {
+            if(mostConstrained.at(i) == vars.at(j))
+            {
+                continue;
+            }
+            for(int k = 0; k < constraints.size(); k++)
+            {
+                if(constraints.at(k).find(mostConstrained.at(i)) < constraints.at(k).length()
+                    && constraints.at(k).find(vars.at(j)) < constraints.at(k).length())
+                {
+                    constraintCount++;
+                }
+            }
+        }
+        if(constraintCount > mostConstraint)
+        {
+            mostConstraint = constraintCount;
+            mostConstraining.clear();
+        }
+        if(constraintCount == mostConstraint)
+        {
+            mostConstraining.push_back(mostConstrained.at(i));
+        }
+    }
+    if(mostConstraining.size() == 1)
+    {
+        return mostConstraining.at(0);
+    }
+
+    // If still ties, break alphabetically
+    sort(mostConstraining.begin(), mostConstraining.end());
+    return mostConstraining.at(0);
+}
+
+void backtrack
+(
+    map<string, vector<int> > varMap, 
+    vector<string> constraints, 
+    vector<string> assignment
+)
+{
+    if(assignment.size() == varMap.size())
+    {
+        return;
+    }
+    vector<string> unassigned = diff(varMap, assignment);
+    string var = select_variable(unassigned, varMap, constraints);
+    cout << var << endl;
+    return;
+}
+
+void forwardcheck
+(
+    map<string, vector<int> > varMap, 
+    vector<string> constraints, 
+    vector<string> assignment
+)
 {
 
 }
@@ -65,10 +174,11 @@ int main(int argc, char** argv)
 
     // Store variables and their domains
     string line;
-    map<char, vector<int> > varMap;
+    map<string, vector<int> > varMap;
     while(getline(varfile, line))
     {
-        char var = line[0];
+        string var = ""; 
+        var = line[0];
         stringstream ss(line.substr(3));
         string value;
         while(ss >> value)
@@ -87,13 +197,16 @@ int main(int argc, char** argv)
     }
 
     // Use the commanded procedure to attempt to solve the CSP
+    // Pass empty assignment string vector to either backtracking algorithm
+    // or the forward checking algorithm
+    vector<string> assignment;
     if(procedure == "none")
     {
-        backtrack(varMap, constraints);
+        backtrack(varMap, constraints, assignment);
     }
     else
     {
-        forwardcheck(varMap, constraints);
+        forwardcheck(varMap, constraints, assignment);
     }
 
     return 0;
