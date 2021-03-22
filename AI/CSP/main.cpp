@@ -14,15 +14,27 @@
 
 using namespace std;
 
+int branchNum = 1;      // variable to count branch number for output
+
 // Function to determine which variables are still unassigned
 vector<string> diff(map<string, vector<int> > mp, vector<string> vec)
 {
     vector<string> vars;
+    bool push;
     for(auto const& e : mp)
     {
-        if(!count(vec.begin(), vec.end(), e.first))
+        push = true;
+        for(int i = 0; i < vec.size(); i++)
         {
-            vars.push_back(e.first);
+            if(vec.at(i)[0] == e.first[0])
+            {
+                push = false;
+                break;
+            }
+            if(push)
+            {
+                vars.push_back(e.first);
+            }
         }
     }
     return vars;
@@ -94,14 +106,193 @@ string select_variable
             mostConstraining.push_back(mostConstrained.at(i));
         }
     }
-    if(mostConstraining.size() == 1)
-    {
-        return mostConstraining.at(0);
-    }
-
-    // If still ties, break alphabetically
     sort(mostConstraining.begin(), mostConstraining.end());
     return mostConstraining.at(0);
+}
+
+int select_value
+(
+    vector<string> unassigned,
+    string variable,
+    map<string, vector<int> > varMap,
+    vector<string> constraints
+)
+{
+    vector<int> values = varMap[variable];
+    int numConstraining = -1;
+    vector<int> leastConstraining;
+    for(int i = 0; i < values.size(); i++)
+    {
+        int tempVal = values.at(i);
+        int count = 0;
+        for(int j = 0; j < unassigned.size(); j++)
+        {
+            bool constrained = false;
+            for(int k = 0; k < constraints.size(); k++)
+            {
+                if(constraints.at(k).find(variable) < constraints.at(k).length() && 
+                    constraints.at(k).find(unassigned.at(j)) < constraints.at(k).length())
+                {
+                    constrained = true;
+                    switch(constraints.at(k)[1])
+                    {
+                        case '>':
+                            if(variable[0] == constraints.at(k)[0])
+                            {
+                                for(int l = 0; l < varMap[unassigned.at(j)].size(); l++)
+                                {
+                                    if(tempVal > varMap[unassigned.at(j)].at(l))
+                                    {
+                                        count++;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                for(int l = 0; l < varMap[unassigned.at(j)].size(); l++)
+                                {
+                                    if(tempVal < varMap[unassigned.at(j)].at(l))
+                                    {
+                                        count++;
+                                    }
+                                }
+                            }
+                            break;
+                        case '<':
+                            if(variable[0] == constraints.at(k)[0])
+                            {
+                                for(int l = 0; l < varMap[unassigned.at(j)].size(); l++)
+                                {
+                                    if(tempVal < varMap[unassigned.at(j)].at(l))
+                                    {
+                                        count++;
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                for(int l = 0; l < varMap[unassigned.at(j)].size(); l++)
+                                {
+                                    if(tempVal > varMap[unassigned.at(j)].at(l))
+                                    {
+                                        count++;
+                                    }
+                                }
+                            }
+                            break;
+                        case '=':
+                            for(int l = 0; l < varMap[unassigned.at(j)].size(); l++)
+                            {
+                                if(tempVal == varMap[unassigned.at(j)].at(l))
+                                {
+                                    count++;
+                                }
+                            }
+                            break;
+                        case '!':
+                            for(int l = 0; l < varMap[unassigned.at(j)].size(); l++)
+                            {
+                                if(tempVal != varMap[unassigned.at(j)].at(l))
+                                {
+                                    count++;
+                                }
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
+                }
+            }
+            if(!constrained)
+            {
+                count += varMap[unassigned.at(j)].size();
+            }
+        }
+        if(count > numConstraining)
+        {
+            numConstraining = count;
+            leastConstraining.clear();
+        }
+        if(count == numConstraining)
+        {
+            leastConstraining.push_back(tempVal);
+        }
+    }
+    sort(leastConstraining.begin(), leastConstraining.end());
+    return leastConstraining.at(0);
+}
+
+bool isConsistent
+(
+    string variable,
+    int value,
+    vector<string> constraints,
+    vector<string> assignment
+)
+{
+    for(int i = 0; i < assignment.size(); i++)
+    {
+        for(int j = 0; j < constraints.size(); j++)
+        {
+            if(constraints.at(j).find(variable) < constraints.at(j).length() &&
+                constraints.at(j).find(assignment.at(i)[0]) < constraints.at(j).length())
+            {
+                    switch(constraints.at(j)[1])
+                    {
+                        case '>':
+                            if(variable[0] == constraints.at(j)[0])
+                            {
+                                if(value < assignment.at(i)[2])
+                                {
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                if(value > assignment.at(i)[2])
+                                {
+                                    return false;
+                                }
+                            }
+                            break;
+                        case '<':
+                            if(variable[0] == constraints.at(j)[0])
+                            {
+                                if(value > assignment.at(i)[2])
+                                {
+                                    return false;
+                                }
+                            }
+                            else
+                            {
+                                if(value < assignment.at(i)[2])
+                                {
+                                    return false;
+                                }
+                            }
+                            break;
+                        case '=':
+                            if(value != assignment.at(i)[2])
+                            {
+                                return false;
+                            }
+                            break;
+                        case '!':
+                            if(value == assignment.at(i)[2])
+                            {
+                                return false;
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+
+                break;
+            }
+        }
+    }
+    return true;
 }
 
 void backtrack
@@ -113,11 +304,41 @@ void backtrack
 {
     if(assignment.size() == varMap.size())
     {
+        cout << branchNum << ". ";
+        for(int i = 0; i < assignment.size(); i++)
+        {
+            cout << assignment.at(i);
+            if(i != assignment.size() - 1)
+            {
+                cout << ", ";
+            }
+        }
+        cout << "  solution" << endl;
         return;
     }
     vector<string> unassigned = diff(varMap, assignment);
     string var = select_variable(unassigned, varMap, constraints);
-    cout << var << endl;
+    unassigned.erase(remove(unassigned.begin(), unassigned.end(), var), unassigned.end());
+    int value = select_value(unassigned, var, varMap, constraints);
+    if(isConsistent(var, value, constraints, assignment))
+    {
+        string assign = var + "=" + to_string(value);
+        assignment.push_back(assign);
+        backtrack(varMap, constraints, assignment);
+    }
+    else
+    {
+        cout << branchNum++ << ". ";
+        for(int i = 0; i < assignment.size(); i++)
+        {
+            cout << assignment.at(i);
+            if(i != assignment.size() - 1)
+            {
+                cout << ", ";
+            }
+        }
+        cout << "  failure" << endl;
+    }
     return;
 }
 
