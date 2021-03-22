@@ -8,7 +8,6 @@ import sys
 # Global variable to track branch number for output
 branchNum = 0
 
-
 # Function to print correctly formatted output
 def print_output(assignment, success):
 
@@ -23,8 +22,6 @@ def print_output(assignment, success):
     else:
         outstr += '  failure'
     print(outstr)
-    if branchNum == 200:
-        sys.exit()
     return
 
 # Function to select variable by applying the most constrained heuristic,
@@ -184,9 +181,64 @@ def backtrack(varMap, constraints, assignment):
 
     return
 
+# Function to apply forward checking to eliminate domain values after an assignment
+def check(variable, value, varMap, constraints):
+    for var in varMap.keys():
+        if var == variable:
+            continue
+        for constraint in constraints:
+            if variable in constraint and var in constraint:
+                if constraint[1] == '>':
+                    if variable == constraint[0]:
+                        varMap[var] = [val for val in varMap[var] if value > val]
+                    else:
+                        varMap[var] = [val for val in varMap[var] if value < val]
+                elif constraint[1] == '<':
+                    if variable == constraint[0]:
+                        varMap[var] = [val for val in varMap[var] if value < val]
+                    else:
+                        varMap[var] = [val for val in varMap[var] if value > val]
+                elif constraint[1] == '=':
+                    varMap[var] = [val for val in varMap[var] if value == val]
+                else: # constraint[1] == '!'
+                    varMap[var] = [val for val in varMap[var] if not value == val]
+    for domain in varMap.values():
+        if len(domain) == 0:
+            return False
+    return True
+
 # Forward checking recursive function, add a variable to assignment until a
 # satisfying assignment is found via forward checking
 def forwardcheck(varMap, constraints, assignment):
+
+    # Base case: all variables have been assigned a valid value
+    # This is a solution
+    if len(assignment) == len(varMap):
+        print_output(assignment, True)
+        sys.exit()
+        return
+
+    # Select a variable that has not been assigned yet
+    unassigned = [var for var in varMap.keys() if var not in assignment.keys()]
+    variable = select_variable(unassigned, varMap, constraints)
+    unassigned.remove(variable)
+
+    # Try each value for the selected variable according to the heuristic
+    # Any time a value is selected, remove values from the domains of the other
+    # variables to forward check, and terminate if there does not exist a
+    # possible value for any variable
+    accessed = []
+    for i in range(0, len(varMap[variable])):
+        value = select_value(variable, unassigned, varMap, accessed, constraints)
+        assignment[variable] = value
+        varMapCpy = varMap.copy()
+        varMapCpy[variable] = [value]
+        if check(variable, value, varMapCpy, constraints):
+            forwardcheck(varMapCpy, constraints, assignment)
+        else:
+            print_output(assignment, False)
+        del assignment[variable]
+        accessed.append(value)
 
     return
 
@@ -195,21 +247,21 @@ def main():
     # Check for correct number of inputs
     if not len(sys.argv) == 4:
         print("Incorrect number of command line arguments")
-        sys.exit()
+        sys.exit(-1)
 
     # Check that each input is what is expected
     varfilename = sys.argv[1]
     if not varfilename[-4:] == '.var':
         print("Invalid var file name")
-        sys.exit()
+        sys.exit(-1)
     confilename = sys.argv[2]
     if not confilename[-4:] == '.con':
         print("Invalid con file name")
-        sys.exit()
+        sys.exit(-1)
     procedure = sys.argv[3]
     if not (procedure == 'fc' or procedure == 'none'):
         print("Invalid procedure given")
-        sys.exit()
+        sys.exit(-1)
     
     # Read var file and store variables and their domains in a map
     # varMap is a map of string to integer list
@@ -229,7 +281,7 @@ def main():
         constraints.append(line[0::2])
     confile.close()
 
-    # Call appropriate function based on whether we are solbing using 
+    # Call appropriate function based on whether we are solving using 
     # backtracking or forward checking
     if procedure == 'none':
         backtrack(varMap, constraints, {})
