@@ -10,9 +10,17 @@ def main():
         print("File not found")
         sys.exit(-1)
     kb = []
+    parents = []
     for line in kbfile:
-        kb.append(line)
+        kb.append(line.split())
+        parents.append(())
     prove = kb.pop()
+    for literal in prove:
+        if literal[0] == '~':
+            kb.append([literal[1:]])
+        else:
+            kb.append(['~' + literal])
+        parents.append(())
     return
 
 if __name__=="__main__":
