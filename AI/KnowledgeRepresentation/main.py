@@ -79,15 +79,15 @@ def main():
         for j in range(0, i):
             resolve = False
             tmpclause = []
-            for literal in kb[i]:
+            for literal in entry:
                 if literal[0] == '~':
                     if literal[1:] in kb[j]:
-                        tmpclause = [term  for term in kb[i] if term != literal] + [term for term in kb[j] if term != literal[1:]]
+                        tmpclause = [term  for term in entry if term != literal] + [term for term in kb[j] if term != literal[1:]]
                         resolve = True
                         break
                 else:
                     if ('~' + literal) in kb[j]:
-                        tmpclause = [term for term in kb[i] if term != literal] + [term for term in kb[j] if term != ('~' + literal)]
+                        tmpclause = [term for term in entry if term != literal] + [term for term in kb[j] if term != ('~' + literal)]
                         resolve = True
                         break
             if resolve:
