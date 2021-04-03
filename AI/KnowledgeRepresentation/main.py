@@ -12,10 +12,8 @@ def is_true(ls):
 
 def is_redundant(kb, clause):
     clause.sort()
-    for fact in kb:
-        fact.sort()
-        if fact == clause:
-            return True
+    if clause in kb:
+        return True
     return False
 
 def printkb(kb, parents):
@@ -55,6 +53,7 @@ def main():
     # Put each of the n-1 lines of the knowledge base into kb and put the 
     # negation of the last n line into kb. Each initial element has no parents
     kb = []
+    sortedkb = []
     parents = []
     for line in kbfile:
         kb.append(line.split())
@@ -67,10 +66,13 @@ def main():
         else:
             kb.append(['~' + literal])
         parents.append((0,0))
+    for fact in kb:
+        tmp = fact.copy()
+        tmp.sort()
+        sortedkb.append(tmp)
 
     # Attempt to resolve clauses iteratively
     done = False
-    #for i in range(0, len(kb)):
     for i, entry in enumerate(kb):
         if done:
             break
@@ -98,10 +100,13 @@ def main():
                     continue
                 nodupes = []
                 [nodupes.append(x) for x in tmpclause if x not in nodupes]
-                if is_redundant(copy.deepcopy(kb), copy.deepcopy(nodupes)):
+                if is_redundant(sortedkb, copy.deepcopy(nodupes)):
                     continue
                 kb.append(nodupes)
                 parents.append((i+1,j+1))
+                tmp = nodupes.copy()
+                tmp.sort()
+                sortedkb.append(tmp)
     printkb(kb, parents)
     return
 
